@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as pg from 'pg';
 const { Client } = pg.default;
+import { createClient } from '@supabase/supabase-js';
 
 import runEnum from './src/enums.mjs';
 import runTablesAndViews from './src/tables-and-views.mjs';
@@ -22,6 +23,11 @@ async function run() {
 	});
 	await c.connect();
 
+	// Create Supabase client for Storage API
+	const supabaseUrl = core.getInput('supabaseUrl');
+	const supabaseServiceKey = core.getInput('supabaseServiceKey');
+	const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 	// Disable needed extensions
 	await runExtensions(extensions, c);
 
@@ -38,7 +44,7 @@ async function run() {
 	await runMigrations(c);
 
 	// Clear out the buckets
-	await runBuckets(buckets, c);
+	await runBuckets(buckets, supabase);
 
 	// Delete policies
 	await runPolicies(c);
